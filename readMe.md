@@ -1,3 +1,6 @@
+## 目录结构
+```
+./
 nft-trade/
 ├── cmd/
 │   └── main.go                 // 程序入口
@@ -17,3 +20,4 @@ nft-trade/
 │   └── logger.go               // 日志工具
 ├── go.mod                      // 依赖管理
 └── go.sum
+```
