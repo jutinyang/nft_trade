@@ -5,11 +5,13 @@ import (
 	"math/big"
 	"strings"
 
+	"nft_trade/utils"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"nft_trade/utils"
 	"go.uber.org/zap"
 )
 
@@ -30,10 +32,10 @@ const ERC721ABI = `[
 
 // ERC721Transactor ERC721交易器
 type ERC721Transactor struct {
-	client      *ethclient.Client
-	abi         abi.ABI
+	client       *ethclient.Client
+	abi          abi.ABI
 	contractAddr common.Address
-	chainID     *big.Int
+	chainID      *big.Int
 }
 
 // NewERC721Transactor 创建ERC721交易器
@@ -60,10 +62,10 @@ func NewERC721Transactor(rpcUrl string, contractAddr string) (*ERC721Transactor,
 	}
 
 	return &ERC721Transactor{
-		client:      client,
-		abi:         abiObj,
+		client:       client,
+		abi:          abiObj,
 		contractAddr: common.HexToAddress(contractAddr),
-		chainID:     chainID,
+		chainID:      chainID,
 	}, nil
 }
 
@@ -122,8 +124,3 @@ func (e *ERC721Transactor) SafeTransferFrom(privateKey string, from, to, tokenId
 
 	return tx.Hash().Hex(), nil
 }
-
-// 注意：需要引入crypto包，添加以下导入（上面代码中省略，需补充）
-import (
-	"github.com/ethereum/go-ethereum/crypto"
-)
