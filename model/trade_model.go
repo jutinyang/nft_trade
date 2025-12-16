@@ -71,3 +71,27 @@ type NFTTradeRecord struct {
 	UpdatedAt  time.Time      `gorm:"comment:更新时间"`
 	DeletedAt  gorm.DeletedAt `gorm:"index;comment:删除时间"`
 }
+
+// Trade 交易记录模型
+type Trade struct {
+	ID            string    `gorm:"primary_key;column:id" json:"id"`             // 交易ID
+	BuyOrderId    string    `gorm:"column:buy_order_id" json:"buy_order_id"`     // 买单ID
+	SellOrderId   string    `gorm:"column:sell_order_id" json:"sell_order_id"`   // 卖单ID
+	NFTId         string    `gorm:"column:nft_id" json:"nft_id"`                 // NFT资产ID
+	TradePrice    int64     `gorm:"column:trade_price" json:"trade_price"`       // 成交价格（分）
+	TradeQuantity int64     `gorm:"column:trade_quantity" json:"trade_quantity"` // 成交数量
+	BuyerAddr     string    `gorm:"column:buyer_addr" json:"buyer_addr"`         // 买方地址
+	SellerAddr    string    `gorm:"column:seller_addr" json:"seller_addr"`       // 卖方地址
+	CreatedAt     time.Time `gorm:"column:created_at" json:"created_at"`
+}
+
+// TableName 表名
+func (t *Trade) TableName() string {
+	return "nft_trades"
+}
+
+// BeforeCreate 创建前钩子
+func (t *Trade) BeforeCreate(tx *gorm.DB) error {
+	t.CreatedAt = time.Now()
+	return nil
+}

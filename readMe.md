@@ -1,23 +1,31 @@
 ## 目录结构
 ```
 ./
-nft-trade/
-├── cmd/
-│   └── main.go                 // 程序入口
-├── config/
-│   └── config.go               // 配置加载
-├── handler/
-│   └── trade_handler.go        // API接口层
-├── model/
-│   └── trade_model.go          // 数据模型（GORM）
-├── service/
-│   └── trade_service.go        // 核心业务服务层
-├── contract/
-│   └── erc721.go               // ERC721合约交互封装
-├── utils/
-│   ├── redis_lock.go           // Redis分布式锁
-│   ├── rabbitmq.go             // RabbitMQ消息队列
-│   └── logger.go               // 日志工具
-├── go.mod                      // 依赖管理
-└── go.sum
+nft-trade/  # 项目根目录
+├── cmd/  # 程序入口层
+│   └── main.go  # 服务启动入口：负责初始化日志、配置、数据库、消息队列等组件，启动API服务
+├── config/  # 配置加载层
+│   └── config.go  # 配置管理：读取环境变量/配置文件（如Redis、MySQL、RabbitMQ的连接信息），提供全局配置访问
+├── handler/  # API接口层（控制层）
+│   └── trade_handler.go  # 接口处理：接收HTTP请求，完成参数校验、请求转发（调用service层）、响应封装
+├── model/  # 数据模型层（实体层）
+│   ├── order.go  # 订单模型：映射数据库“订单表”，基于GORM定义表结构、字段约束
+│   └── trade_model.go  # 交易记录模型：映射数据库“交易表”，定义交易相关数据结构
+├── service/  # 核心业务逻辑层
+│   ├── trade_service.go  # 交易业务：实现交易相关的业务规则（如交易记录生成、资产划转逻辑）
+│   ├── order.go  # 订单业务：处理订单的创建、状态更新、撤销等生命周期管理
+│   └── match.go  # 订单撮合引擎：实现买单与卖单的价格/时间优先匹配逻辑，是平台核心业务
+├── contract/  # 区块链合约交互层
+│   └── erc721.go  # ERC721合约封装：实现NFT链上操作（转账、授权、NFT归属查询），通过RPC节点与区块链交互
+├── dao/  # 数据访问层（DAO）
+│   ├── mysql.go  # MySQL数据操作：封装订单、交易记录的CRUD（增删改查），屏蔽MySQL底层操作细节
+│   └── redis.go  # Redis数据操作：封装订单簿缓存、分布式锁、临时数据存储的Redis操作
+├── utils/  # 工具函数与公共组件层
+│   ├── crypto.go  # 加密工具：提供哈希、签名、加密/解密等通用密码学功能
+│   ├── idgen.go  # ID生成器：生成全局唯一的订单ID、交易ID（如基于雪花算法/UUID）
+│   ├── logger.go  # 日志工具：封装zap等日志库，提供统一的日志打印、级别控制接口
+│   ├── rabbitmq.go  # 消息队列组件：封装RabbitMQ的生产者/消费者逻辑，实现异步消息通信（如交易通知）
+│   └── redis_lock.go  # 分布式锁：基于Redis实现分布式锁，解决并发场景下的资源竞争（如订单撮合的并发安全）
+├── go.mod  # Go模块依赖文件：记录项目依赖的第三方库（如gorm、go-redis、zap）及其版本
+└── go.sum  # 依赖校验文件：记录依赖库的哈希值，确保依赖版本一致性
 ```

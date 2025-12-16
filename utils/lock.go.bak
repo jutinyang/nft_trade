@@ -1,0 +1,84 @@
+package utils
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/spf13/viper"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
+)
+
+var lock *RedisLock
+
+type RedisLock struct {
+	client *redis.Client
+	ctx    context.Context
+}
+
+// Client 返回Redis客户端（供外部包调用）
+func (rl *RedisLock) Client() *redis.Client {
+	return rl.client
+}
+
+// InitRedis 初始化RedisLock（需在程序启动时调用）
+func InitRedis() error {
+	var err error
+	// 从配置文件读取Redis参数
+	redisAddr := viper.GetString("redis.addr")
+	redisPwd := viper.GetString("redis.password")
+	redisDB := viper.GetInt("redis.db")
+
+	lock, err = NewRedisLock(redisAddr, redisPwd, redisDB)
+	if err != nil {
+		return fmt.Errorf("init redis lock failed: %w", err)
+	}
+	return nil
+}
+
+// 补全NewRedisLock函数（需确保导入redis包）
+func NewRedisLock(addr, password string, db int) (*RedisLock, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+	// 校验Redis连接可用性
+	if err := client.Ping(context.Background()).Err(); err != nil {
+		return nil, fmt.Errorf("redis connect failed: %w", err)
+	}
+	return &RedisLock{
+		client: client,
+		ctx:    context.Background(),
+	}, nil
+}
+
+// Lock 分布式锁：加锁（存入唯一标识）
+func (rl *RedisLock) Lock(key string, expire time.Duration) (string, error) {
+	lockID := uuid.NewString() // 生成锁持有者唯一标识
+	res, err := rl.client.SetNX(rl.ctx, key, lockID, expire).Result()
+	if !res || err != nil {
+		return "", err
+	}
+	return lockID, nil // 返回锁标识，用于解锁校验
+}
+
+// Unlock 分布式锁：解锁（原子校验标识）
+func (rl *RedisLock) Unlock(key, lockID string) error {
+	// Lua脚本：先校验锁标识是否匹配，再删除
+	luaScript := `
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+            return redis.call('del', KEYS[1])
+        else
+            return 0
+        end
+    `
+	// 正确写法：先调用Result()获取结果和错误，再处理
+	err := rl.client.Eval(rl.ctx, luaScript, []string{key}, lockID).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}

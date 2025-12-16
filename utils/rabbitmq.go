@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/streadway/amqp"
+	"go.uber.org/zap" // 正确的zap导入路径
 )
 
 var RabbitMQConn *amqp.Connection
